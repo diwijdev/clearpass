@@ -1,9 +1,16 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import PatientList from './pages/PatientList'
+import PatientDetail from './pages/PatientDetail'
+
 function App() {
   return (
-    <div className="bg-blue-500 text-white p-4">
-      <h1>Clearpass</h1>
-    </div>
-  );
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<PatientList />} />
+        <Route path="/patient/:id" element={<PatientDetail />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
-export default App;
+export default App
