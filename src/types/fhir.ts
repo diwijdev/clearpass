@@ -15,3 +15,31 @@ export interface FHIRBundle<T> {
     resource: T
   }>
 }
+
+export interface Observation {
+  id: string
+  resourceType: 'Observation'
+  code: {
+    text: string
+    coding: Array<{ display: string }>
+  }
+  valueQuantity?: {
+    value: number
+    unit: string
+  }
+  valueString?: string
+  status: string
+  effectiveDateTime: string
+}
+
+export interface Condition {
+  id: string
+  resourceType: 'Condition'
+  code: {
+    text: string
+    coding: Array<{ display: string }>
+  }
+  clinicalStatus: {
+    coding: Array<{ code: string }>
+  }
+}
