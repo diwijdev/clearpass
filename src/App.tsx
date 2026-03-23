@@ -5,7 +5,7 @@ import PatientDetail from './pages/PatientDetail'
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-surface">
+      <div className="min-h-screen bg-surface-container-low">
         <Routes>
           <Route path="/" element={<PatientList />} />
           <Route path="/patient/:id" element={<PatientDetail />} />
