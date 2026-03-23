@@ -5,10 +5,12 @@ import PatientDetail from './pages/PatientDetail'
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<PatientList />} />
-        <Route path="/patient/:id" element={<PatientDetail />} />
-      </Routes>
+      <div className="min-h-screen bg-surface">
+        <Routes>
+          <Route path="/" element={<PatientList />} />
+          <Route path="/patient/:id" element={<PatientDetail />} />
+        </Routes>
+      </div>
     </BrowserRouter>
   )
 }
