@@ -1,9 +1,15 @@
-function TopBar() {
+interface Props {
+  onMenuClick?: () => void
+}
+
+function TopBar({ onMenuClick }: Props) {
   return (
     <header className="fixed top-0 w-full z-50 flex items-center justify-between px-6 py-4 backdrop-blur-md"
       style={{ backgroundColor: 'var(--color-surface-container-low)' }}>
       <div className="flex items-center gap-4">
-        <button className="p-2 rounded-full hover:bg-surface-container transition-colors">
+        <button
+          onClick={onMenuClick}
+          className="p-2 rounded-full hover:bg-surface-container transition-colors md:hidden">
           <span className="material-symbols-outlined text-on-surface">menu</span>
         </button>
         <h1 className="text-xl font-bold tracking-tighter text-on-surface">ClearPass</h1>

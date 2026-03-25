@@ -9,6 +9,9 @@ import type { Patient, Observation, Condition } from "../types/fhir";
 import TopBar from "../components/TopBar";
 import BottomNav from "../components/BottomNav";
 import Sidebar from "../components/SideBar";
+import HandoffNoteSection from '../components/HandoffNote'
+import ADLNotes from '../components/ADLNotes'
+import PendingTasks from '../components/PendingTasks'
 
 function PatientDetail() {
   const { id } = useParams();
@@ -17,19 +20,25 @@ function PatientDetail() {
   const [observations, setObservations] = useState<Observation[]>([]);
   const [conditions, setConditions] = useState<Condition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'details' | 'handoff'>('details')
 
   useEffect(() => {
     async function loadData() {
       if (!id) return;
-      const [p, o, c] = await Promise.all([
-        fetchPatient(id),
-        fetchObservations(id),
-        fetchConditions(id),
-      ]);
-      setPatient(p);
-      setObservations(o);
-      setConditions(c);
-      setLoading(false);
+      try {
+        const [p, o, c] = await Promise.allSettled([
+          fetchPatient(id),
+          fetchObservations(id),
+          fetchConditions(id),
+        ]);
+        if (p.status === 'fulfilled') setPatient(p.value);
+        if (o.status === 'fulfilled') setObservations(o.value);
+        if (c.status === 'fulfilled') setConditions(c.value);
+      } catch (err) {
+        console.error('Failed to load patient data:', err);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, [id]);
@@ -44,8 +53,23 @@ function PatientDetail() {
 
   if (!patient) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <p className="text-on-surface-variant">Patient not found.</p>
+      <div className="min-h-screen bg-surface flex flex-col items-center justify-center gap-4">
+        <span className="material-symbols-outlined text-4xl text-outline-variant">
+          error_outline
+        </span>
+        <p className="text-on-surface-variant font-medium">
+          Couldn't load patient data
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider transition-all"
+          style={{
+            background: 'linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-container) 100%)',
+            color: 'var(--color-on-primary)',
+          }}>
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          Back to ward
+        </button>
       </div>
     );
   }
@@ -119,81 +143,114 @@ function PatientDetail() {
           </div>
         </section>
 
-        {/* Vitals */}
-        <section className="space-y-3 mb-6">
-          <h3 className="text-sm font-bold tracking-widest uppercase text-on-surface-variant px-2">
-            Vitals Snapshot
-          </h3>
-          {observations.length === 0 ? (
-            <p className="text-on-surface-variant text-sm px-2">
-              No vitals recorded.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {observations.slice(0, 4).map((obs) => (
-                <div
-                  key={obs.id}
-                  className="p-4 rounded-xl flex flex-col justify-between"
-                  style={{
-                    backgroundColor: "var(--color-surface-container-low)",
-                  }}
-                >
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-                    {obs.code?.text ??
-                      obs.code?.coding?.[0]?.display ??
-                      "Observation"}
-                  </p>
-                  <p className="text-2xl font-bold text-primary">
-                    {obs.valueQuantity
-                      ? `${obs.valueQuantity.value} ${obs.valueQuantity.unit}`
-                      : (obs.valueString ?? "N/A")}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Conditions */}
-        <section className="space-y-3 mb-6">
-          <h3 className="text-sm font-bold tracking-widest uppercase text-on-surface-variant px-2">
-            Active Conditions
-          </h3>
-          <div
-            className="rounded-xl overflow-hidden shadow-sm"
-            style={{ backgroundColor: "var(--color-surface-container-lowest)" }}
-          >
-            {conditions.length === 0 ? (
-              <p className="text-on-surface-variant text-sm p-4">
-                No conditions recorded.
-              </p>
-            ) : (
-              conditions.map((condition, index) => (
-                <div
-                  key={condition.id}
-                  className="flex items-center p-4"
-                  style={{
-                    borderBottom:
-                      index < conditions.length - 1
-                        ? "1px solid var(--color-surface-container-low)"
-                        : "none",
-                  }}
-                >
-                  <span className="material-symbols-outlined text-outline-variant mr-4">
-                    vital_signs
+        {/* Tab content */}
+        {activeTab === 'details' ? (
+          <>
+            {/* Vitals */}
+            <section className="space-y-3 mb-6">
+              <h3 className="text-sm font-bold tracking-widest uppercase text-on-surface-variant px-2">
+                Vitals Snapshot
+              </h3>
+              {observations.length === 0 ? (
+                <div className="rounded-xl p-8 flex flex-col items-center justify-center text-center space-y-2"
+                  style={{ backgroundColor: 'var(--color-surface-container-low)' }}>
+                  <span className="material-symbols-outlined text-3xl text-outline-variant">
+                    monitor_heart
                   </span>
-                  <p className="text-sm font-semibold text-primary">
-                    {condition.code?.text ??
-                      condition.code?.coding?.[0]?.display ??
-                      "Unknown condition"}
+                  <p className="text-sm font-semibold text-on-surface-variant">
+                    No vitals recorded
+                  </p>
+                  <p className="text-xs text-outline">
+                    Vitals will appear here once observations are charted.
                   </p>
                 </div>
-              ))
-            )}
-          </div>
-        </section>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {observations.slice(0, 4).map((obs) => (
+                    <div
+                      key={obs.id}
+                      className="p-4 rounded-xl flex flex-col justify-between"
+                      style={{
+                        backgroundColor: "var(--color-surface-container-low)",
+                      }}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+                        {obs.code?.text ??
+                          obs.code?.coding?.[0]?.display ??
+                          "Observation"}
+                      </p>
+                      <p className="text-2xl font-bold text-primary">
+                        {obs.valueQuantity
+                          ? `${obs.valueQuantity.value} ${obs.valueQuantity.unit}`
+                          : (obs.valueString ?? "N/A")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Conditions */}
+            <section className="space-y-3 mb-6">
+              <h3 className="text-sm font-bold tracking-widest uppercase text-on-surface-variant px-2">
+                Active Conditions
+              </h3>
+              <div
+                className="rounded-xl overflow-hidden shadow-sm"
+                style={{ backgroundColor: "var(--color-surface-container-lowest)" }}
+              >
+                {conditions.length === 0 ? (
+                  <div className="p-8 flex flex-col items-center justify-center text-center space-y-2">
+                    <span className="material-symbols-outlined text-3xl text-outline-variant">
+                      diagnosis
+                    </span>
+                    <p className="text-sm font-semibold text-on-surface-variant">
+                      No active conditions
+                    </p>
+                    <p className="text-xs text-outline">
+                      Conditions from the patient record will be listed here.
+                    </p>
+                  </div>
+                ) : (
+                  conditions.map((condition, index) => (
+                    <div
+                      key={condition.id}
+                      className="flex items-center p-4"
+                      style={{
+                        borderBottom:
+                          index < conditions.length - 1
+                            ? "1px solid var(--color-surface-container-low)"
+                            : "none",
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-outline-variant mr-4">
+                        vital_signs
+                      </span>
+                      <p className="text-sm font-semibold text-primary">
+                        {condition.code?.text ??
+                          condition.code?.coding?.[0]?.display ??
+                          "Unknown condition"}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+
+            {/* ADL Notes */}
+            <ADLNotes patientId={id!} />
+          </>
+        ) : (
+          <>
+            {/* Pending Tasks */}
+            <PendingTasks patientId={id!} />
+
+            {/* Handoff Note */}
+            <HandoffNoteSection patientId={id!} />
+          </>
+        )}
       </main>
-      <BottomNav />
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 }
