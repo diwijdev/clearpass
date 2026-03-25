@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom'
+import BrandLockup from './BrandLockup'
+
 interface Props {
   onMenuClick?: () => void
 }
@@ -12,7 +15,12 @@ function TopBar({ onMenuClick }: Props) {
           className="p-2 rounded-full hover:bg-surface-container transition-colors md:hidden">
           <span className="material-symbols-outlined text-on-surface">menu</span>
         </button>
-        <h1 className="text-xl font-bold tracking-tighter text-on-surface">ClearPass</h1>
+        <Link
+          to="/"
+          aria-label="ClearPass home"
+          className="rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <BrandLockup />
+        </Link>
       </div>
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">

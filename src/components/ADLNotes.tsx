@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { fetchADLNote, saveADLNote } from '../services/supabaseService'
 import type { ADLNote } from '../types/handoff'
 
@@ -102,7 +103,10 @@ function ADLNotes({ patientId }: Props) {
         </div>
 
         {/* Save button */}
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          animate={saved ? { scale: [1, 1.04, 1] } : { scale: 1 }}
+          transition={{ duration: 0.3 }}
           onClick={handleSave}
           disabled={saving}
           className="w-full py-3 rounded-lg text-sm font-bold uppercase tracking-widest transition-all"
@@ -114,7 +118,7 @@ function ADLNotes({ patientId }: Props) {
             opacity: saving ? 0.6 : 1
           }}>
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save ADL Notes'}
-        </button>
+        </motion.button>
 
       </div>
     </section>

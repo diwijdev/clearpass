@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { fetchTasks, addTask, toggleTask } from '../services/supabaseService'
 import type { PendingTask } from '../types/handoff'
 
@@ -12,34 +13,33 @@ function PendingTasks({ patientId }: Props) {
   const [priority, setPriority] = useState<PendingTask['priority']>('medium')
   const [adding, setAdding] = useState(false)
 
-
-    useEffect(() => {
-        loadTasks()
-    }, [patientId])
-
+  useEffect(() => {
     async function loadTasks() {
-        const data = await fetchTasks(patientId)
-        setTasks(data)
+      const data = await fetchTasks(patientId)
+      setTasks(data)
     }
+    void loadTasks()
+  }, [patientId])
 
-    async function handleAdd() {
-        if (!newTask.trim()) return
-        setAdding(true)
-        await addTask(patientId, newTask.trim(), priority)
-        setNewTask('')
-        setPriority('medium')
-        await loadTasks()
-        setAdding(false)
-    }
+  async function handleAdd() {
+    if (!newTask.trim()) return
+    setAdding(true)
+    await addTask(patientId, newTask.trim(), priority)
+    setNewTask('')
+    setPriority('medium')
+    const data = await fetchTasks(patientId)
+    setTasks(data)
+    setAdding(false)
+  }
 
-    async function handleToggle(taskId: string, currentStatus: boolean) {
-        await toggleTask(taskId, !currentStatus)
-        setTasks(prev =>
-        prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
-        )
-    }
+  async function handleToggle(taskId: string, currentStatus: boolean) {
+    await toggleTask(taskId, !currentStatus)
+    setTasks(prev =>
+      prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
+    )
+  }
 
-    const priorityColors: Record<PendingTask['priority'], string> = {
+  const priorityColors: Record<PendingTask['priority'], string> = {
     high: 'var(--color-error)',
     medium: 'var(--color-tertiary)',
     low: 'var(--color-primary)',
@@ -73,7 +73,8 @@ function PendingTasks({ patientId }: Props) {
             <option value="medium">Med</option>
             <option value="low">Low</option>
           </select>
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={handleAdd}
             disabled={adding || !newTask.trim()}
             className="rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wider transition-all"
@@ -83,7 +84,7 @@ function PendingTasks({ patientId }: Props) {
               opacity: adding || !newTask.trim() ? 0.5 : 1,
             }}>
             {adding ? '...' : 'Add'}
-          </button>
+          </motion.button>
         </div>
 
         {/* Task list */}
@@ -93,29 +94,41 @@ function PendingTasks({ patientId }: Props) {
           </p>
         ) : (
           <ul className="space-y-2">
-            {tasks.map(task => (
-              <li key={task.id}
-                className="flex items-center gap-3 rounded-lg p-3 transition-all"
-                style={{ backgroundColor: 'var(--color-surface-container-lowest)' }}>
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => handleToggle(task.id, task.completed)}
-                  className="w-4 h-4 rounded accent-primary shrink-0"
-                />
-                <span className={`flex-1 text-sm ${task.completed ? 'line-through opacity-50' : 'text-on-surface'}`}>
-                  {task.task}
-                </span>
-                <span
-                  className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                  style={{
-                    color: priorityColors[task.priority],
-                    border: `1px solid ${priorityColors[task.priority]}`,
-                  }}>
-                  {task.priority}
-                </span>
-              </li>
-            ))}
+            <AnimatePresence>
+              {tasks.map(task => (
+                <motion.li
+                  key={task.id}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="flex items-center gap-3 rounded-lg p-3"
+                  style={{ backgroundColor: 'var(--color-surface-container-lowest)' }}>
+                  <motion.div whileTap={{ scale: 0.8 }} className="shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={() => handleToggle(task.id, task.completed)}
+                      className="w-4 h-4 rounded accent-primary"
+                    />
+                  </motion.div>
+                  <motion.span
+                    animate={{ opacity: task.completed ? 0.5 : 1 }}
+                    transition={{ duration: 0.2 }}
+                    className={`flex-1 text-sm ${task.completed ? 'line-through' : 'text-on-surface'}`}>
+                    {task.task}
+                  </motion.span>
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                    style={{
+                      color: priorityColors[task.priority],
+                      border: `1px solid ${priorityColors[task.priority]}`,
+                    }}>
+                    {task.priority}
+                  </span>
+                </motion.li>
+              ))}
+            </AnimatePresence>
           </ul>
         )}
       </div>

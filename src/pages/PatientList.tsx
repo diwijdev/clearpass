@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { fetchPatients, fetchConditions } from '../services/fhirService'
 import type { Patient, Condition } from '../types/fhir'
 import TopBar from '../components/TopBar'
@@ -76,7 +77,8 @@ function PatientList() {
               {liveMode ? 'Live FHIR Server' : 'Sample Data'}
             </span>
           </div>
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={() => setLiveMode(!liveMode)}
             className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full transition-colors"
             style={{
@@ -84,7 +86,7 @@ function PatientList() {
               color: liveMode ? 'var(--color-on-primary-container)' : 'var(--color-on-surface-variant)',
             }}>
             {liveMode ? 'Use Sample Data' : 'Try Live FHIR'}
-          </button>
+          </motion.button>
         </div>
 
         {/* Search bar */}
@@ -109,8 +111,11 @@ function PatientList() {
             { key: 'critical' as const, label: 'Critical Only' },
             { key: 'stable' as const, label: 'Stable' },
           ].map(chip => (
-            <button
+            <motion.button
               key={chip.key}
+              layout
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               onClick={() => setFilter(chip.key)}
               className={`px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase whitespace-nowrap transition-colors ${
                 filter === chip.key
@@ -119,7 +124,7 @@ function PatientList() {
               }`}
               style={filter !== chip.key ? { backgroundColor: 'var(--color-surface-container-low)' } : undefined}>
               {chip.label}
-            </button>
+            </motion.button>
           ))}
         </div>
 
@@ -128,64 +133,73 @@ function PatientList() {
           <p className="text-on-surface-variant">Loading patients...</p>
         ) : (
           <div className="space-y-4">
-            {filtered.map(patient => {
-            const conditionsLoaded = patient.id in conditionsMap
-            const status = statusConfig[deriveStatus(conditionsMap[patient.id] ?? [])]
-            return (
-              <div
-                key={patient.id}
-                onClick={() => navigate(`/patient/${patient.id}`)}
-                className="p-5 rounded-xl border-l-4 cursor-pointer hover:shadow-md transition-all"
-                style={{
-                  backgroundColor: 'var(--color-surface-container-lowest)',
-                  borderLeftColor: status.border,
-                }}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="text-lg font-bold tracking-tight text-primary">
-                      {patient.name?.[0]?.given?.[0]} {patient.name?.[0]?.family}
-                    </h3>
-                    <p className="text-xs font-bold text-on-surface-variant tracking-widest uppercase">
-                      ID-{patient.id}
-                    </p>
+            <AnimatePresence mode="popLayout">
+              {filtered.map((patient, index) => {
+              const conditionsLoaded = patient.id in conditionsMap
+              const status = statusConfig[deriveStatus(conditionsMap[patient.id] ?? [])]
+              return (
+                <motion.div
+                  key={patient.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.25, delay: Math.min(index * 0.05, 0.4) }}
+                  whileHover={{ scale: 1.015, boxShadow: '0 8px 25px rgba(0,0,0,0.15)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(`/patient/${patient.id}`)}
+                  className="p-5 rounded-xl border-l-4 cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--color-surface-container-lowest)',
+                    borderLeftColor: status.border,
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-lg font-bold tracking-tight text-primary">
+                        {patient.name?.[0]?.given?.[0]} {patient.name?.[0]?.family}
+                      </h3>
+                      <p className="text-xs font-bold text-on-surface-variant tracking-widest uppercase">
+                        ID-{patient.id}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter"
+                      style={{
+                        backgroundColor: conditionsLoaded ? status.bg : 'var(--color-surface-container-low)',
+                        color: conditionsLoaded ? status.text : 'var(--color-on-surface-variant)',
+                        borderLeftColor: conditionsLoaded ? status.border : 'var(--color-surface-container-low)',
+                      }}>
+                      {conditionsLoaded ? status.label : '...'}
+                    </span>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter"
-                    style={{
-                      backgroundColor: conditionsLoaded ? status.bg : 'var(--color-surface-container-low)',
-                      color: conditionsLoaded ? status.text : 'var(--color-on-surface-variant)',
-                      borderLeftColor: conditionsLoaded ? status.border : 'var(--color-surface-container-low)',
-                    }}>
-                    {conditionsLoaded ? status.label : '...'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-0.5">Gender</span>
-                    <p className="text-sm font-semibold text-primary capitalize">{patient.gender}</p>
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-0.5">Gender</span>
+                      <p className="text-sm font-semibold text-primary capitalize">{patient.gender}</p>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-0.5">DOB</span>
+                      <p className="text-sm font-semibold text-primary">{patient.birthDate ?? 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-0.5">Condition</span>
+                      <p className="text-sm font-semibold text-primary truncate">
+                        {conditionsLoaded
+                          ? (conditionsMap[patient.id]?.[0]?.code?.text ?? 'None listed')
+                          : 'Loading...'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-0.5">DOB</span>
-                    <p className="text-sm font-semibold text-primary">{patient.birthDate ?? 'N/A'}</p>
+                  <div className="mt-4 pt-4 flex justify-end"
+                    style={{ borderTop: '1px solid var(--color-surface-container-low)' }}>
+                    <button className="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
+                      View Details
+                      <span className="material-symbols-outlined text-sm">chevron_right</span>
+                    </button>
                   </div>
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-widest text-on-surface-variant mb-0.5">Condition</span>
-                    <p className="text-sm font-semibold text-primary truncate">
-                      {conditionsLoaded
-                        ? (conditionsMap[patient.id]?.[0]?.code?.text ?? 'None listed')
-                        : 'Loading...'}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 flex justify-end"
-                  style={{ borderTop: '1px solid var(--color-surface-container-low)' }}>
-                  <button className="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
-                    View Details
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                  </button>
-                </div>
-              </div>
-            )})}
+                </motion.div>
+              )})}
+            </AnimatePresence>
           </div>
         )}
       </main>
