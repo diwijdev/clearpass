@@ -8,7 +8,7 @@ import {
 } from "../services/fhirService";
 import type { Patient, Observation, Condition } from "../types/fhir";
 import TopBar from "../components/TopBar";
-import BottomNav from "../components/BottomNav";
+// import BottomNav from "../components/BottomNav";
 import Sidebar from "../components/SideBar";
 import BrandLockup from "../components/BrandLockup";
 import HandoffNoteSection from '../components/HandoffNote'
@@ -162,6 +162,27 @@ function PatientDetail() {
           </div>
         </motion.section>
 
+        {/* Inline tab bar */}
+        <div className="flex gap-1 mb-6 rounded-xl p-1" style={{ backgroundColor: 'var(--color-surface-container-low)' }}>
+          {(['details', 'handoff'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="relative flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold tracking-wider uppercase transition-colors"
+              style={{
+                backgroundColor: activeTab === tab ? 'var(--color-surface-container-lowest)' : 'transparent',
+                color: activeTab === tab ? 'var(--color-tertiary)' : 'var(--color-on-surface-variant)',
+                boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.15)' : 'none',
+              }}
+            >
+              <span className="material-symbols-outlined text-base">
+                {tab === 'details' ? 'analytics' : 'ios_share'}
+              </span>
+              {tab === 'details' ? 'Details' : 'Handoff'}
+            </button>
+          ))}
+        </div>
+
         {/* Tab content */}
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
@@ -284,7 +305,7 @@ function PatientDetail() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* <BottomNav /> */}
     </div>
   );
 }

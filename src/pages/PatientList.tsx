@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { fetchPatients, fetchConditions } from '../services/fhirService'
 import type { Patient, Condition } from '../types/fhir'
 import TopBar from '../components/TopBar'
-import BottomNav from '../components/BottomNav'
+// import BottomNav from '../components/BottomNav'
 import Sidebar from '../components/SideBar'
 import { deriveStatus, statusConfig } from '../utils/patientStatus'
 
@@ -204,7 +204,7 @@ function PatientList() {
         )}
       </main>
 
-      <BottomNav />
+      {/* <BottomNav /> */}
     </div>
   )
 }
